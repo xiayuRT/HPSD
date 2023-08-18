@@ -1,7 +1,7 @@
 #ifndef _HSPD_SPI_HPP
 #define _HSPD_SPI_HPP
 
-#include <stdint.h>
+#include <cstdint.h>
 
 int SPI_begin();
 void SPI_end(int spi_fd);
