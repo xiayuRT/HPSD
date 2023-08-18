@@ -1,3 +1,20 @@
+/**
+ * ****************************(C) COPYRIGHT 2023 Blue Bear****************************
+ * @file       HighPowerStepperDriver.hpp
+ * @brief      This is the header file for the HighPowerStepperDriver.cpp
+ * 
+ * @note       
+ * @history:
+ *   Version   Date            Author          Modification    Email
+ *   V1.0.0    Aug-18-2023     Xiayu Z                         xiayu.zeng@runningtide.com
+ * 
+ * @verbatim
+ * ==============================================================================
+ * 
+ * ==============================================================================
+ * @endverbatim
+ * ****************************(C) COPYRIGHT 2023 Blue Bear****************************
+ */
 #ifndef _HIGHPOWERSTEPPERDRIVER_HPP
 #define _HIGHPOWERSTEPPERDRIVER_HPP
 
@@ -29,6 +46,7 @@ protected:
   void writeDECAY();
   void writeSTALL();
   void writeDRIVE();
+
   public:
     DRV8711SPI driver; 
 };

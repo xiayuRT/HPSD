@@ -36,7 +36,7 @@
 #define REGWRITE 0x0000
 
 // SPI configuration
-static const char *device = "/dev/spidev1.0";
+static const char *device = "/dev/spidev0.0";
 static uint8_t spi_mode |= SPI_MODE_0;
 static uint8_t bits_per_word = 16;
 static uin32_t spi_speed = 500000;
