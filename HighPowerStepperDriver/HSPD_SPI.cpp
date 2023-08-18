@@ -37,9 +37,9 @@
 
 // SPI configuration
 static const char *device = "/dev/spidev0.0";
-static uint8_t spi_mode |= SPI_MODE_0;
-static uint8_t bits_per_word = 16;
-static uin32_t spi_speed = 500000;
+static uint8_t spi_mode = SPI_MODE_0;
+static uint8_t bits_per_word = 8;
+static uint32_t spi_speed = 500000;
 static uint16_t spi_delay = 0;
 
 
@@ -55,39 +55,41 @@ int SPI_begin(){
     int spi_fd;
 
     // search for the SPI device
-    spi_fd = open(device, O_RDWR)
+    spi_fd = open(device, O_RDWR);
     if(spi_fd < 0)
         pabort("Can't open the device");
 
 
     // set the SPI mode
-    ret = ioctl(fd, SPI_IOC_WR_MODE, &mode);
+    ret = ioctl(spi_fd, SPI_IOC_WR_MODE, &spi_mode);
     if (ret == -1)
         pabort("can't set spi mode");
 
-    ret = ioctl(fd, SPI_IOC_RD_MODE, &mode);
+    ret = ioctl(spi_fd, SPI_IOC_RD_MODE, &spi_mode);
     if (ret == -1)
         pabort("can't set spi mode");
 
     
     // set the bits per word
-    ret = ioctl(fd, SPI_IOC_WR_BITS_PER_WORD, &bits);
+    ret = ioctl(spi_fd, SPI_IOC_WR_BITS_PER_WORD, &bits_per_word);
     if (ret == -1)
         pabort("can't set bits per word");
 
-    ret = ioctl(fd, SPI_IOC_RD_BITS_PER_WORD, &bits);
+    ret = ioctl(spi_fd, SPI_IOC_RD_BITS_PER_WORD, &bits_per_word);
     if (ret == -1)
         pabort("can't set bits per word");
 
 
     // set the SPI speed
-    ret = ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed);
+    ret = ioctl(spi_fd, SPI_IOC_WR_MAX_SPEED_HZ, &spi_speed);
     if (ret == -1)
         pabort("can't set max speed hz");
 
-    ret = ioctl(fd, SPI_IOC_RD_MAX_SPEED_HZ, &speed);
+    ret = ioctl(spi_fd, SPI_IOC_RD_MAX_SPEED_HZ, &spi_speed);
     if (ret == -1)
         pabort("can't get max speed hz");
+
+    return spi_fd;
 
 }
 
@@ -99,18 +101,21 @@ void SPI_end(int spi_fd){
 // Write instruction
 void reg_write(int spi_fd, uint16_t data){
     int ret;
-    uint16_t tx[] = {data};
+    uint8_t tx[2];
+    tx[0] = data >> 8;
+    tx[1] = data | 0b00000000;
 
     struct spi_ioc_transfer tr ={
         .tx_buf = (unsigned long) tx,
         .rx_buf = (unsigned long) NULL,
-        .len = (sizeof(tx)/sizeof(*tx) * 2),
-        .delay_usecs = delay,
-        .speed_hz = speed,
-        .bits_per_word = bits_per_word
+        //.len = (sizeof(tx)/sizeof(*tx) * 2),
+        .len = 2,
+        .delay_usecs = spi_delay,
+        //.speed_hz = spi_speed,
+        .bits_per_word = bits_per_word,
     };
 
-    ret = ioclt(spi_fd, SPI_IOC_MESSAGE(1), &tr);
+    ret = ioctl(spi_fd, SPI_IOC_MESSAGE(1), &tr);
 
     if(ret < 1)
         pabort("can't send spi message!");
