@@ -21,6 +21,10 @@
 #include <cstdint>
 
 #include <iostream>
+#include <pigpio.h>
+#include <chrono>
+#include <thread>
+
 #include "HighPowerStepperDriver.hpp"
 #include "HSPD_SPI.hpp"
 
@@ -85,14 +89,26 @@ public:
     void writeReg(uint8_t address, uint16_t value){
         // read/write bit and register address are the first 4 bits of the first byte; data
         // is in the temaining 4 bits of the first byte combined with the second byte (12 bytes total)
+	setChipSelectPin();
+        gpioWrite(17, 1);
+        std::this_thread::sleep_for(std::chrono::microseconds(10));
         int spi_fd = SPI_begin();
         reg_write(spi_fd, (address & 0b111) << 12 | (value & 0xFFF));
         SPI_end(spi_fd);
+        std::this_thread::sleep_for(std::chrono::microseconds(5));
+        gpioWrite(17, 0);
     }
 
     // Write the specified value to a register
     void writeReg(HPSDRegAddr address, uint16_t value){
         writeReg((uint8_t) address, value);
+    }
+
+    void setChipSelectPin()
+    {
+        gpioInitialise();
+        gpioSetMode(17, PI_OUTPUT);
+        gpioWrite(17, 0);
     }
 };
 

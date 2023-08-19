@@ -37,7 +37,7 @@
 
 // SPI configuration
 static const char *device = "/dev/spidev0.0";
-static uint8_t spi_mode = SPI_MODE_0;
+static uint8_t spi_mode = 0;
 static uint8_t bits_per_word = 8;
 static uint32_t spi_speed = 500000;
 static uint16_t spi_delay = 0;
@@ -61,6 +61,8 @@ int SPI_begin(){
 
 
     // set the SPI mode
+    spi_mode |= SPI_CS_HIGH;
+    // spi_mode &= ~SPI_NO_CS;
     ret = ioctl(spi_fd, SPI_IOC_WR_MODE, &spi_mode);
     if (ret == -1)
         pabort("can't set spi mode");
