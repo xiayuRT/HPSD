@@ -31,10 +31,6 @@
 
 #include "HSPD_SPI.hpp"
 
-
-// Register Access
-#define REGWRITE 0x0000
-
 // SPI configuration
 static const char *device = "/dev/spidev0.0";
 static uint8_t spi_mode = 0;
@@ -42,7 +38,7 @@ static uint8_t bits_per_word = 8;
 static uint32_t spi_speed = 500000;
 static uint16_t spi_delay = 0;
 
-
+// Send the error msg and terminate the program
 static void pabort(const char *s){
     std::cout << s << std::endl; // output the error message to the terminal
     std::exit(EXIT_FAILURE);  // terminate the program
@@ -95,7 +91,7 @@ int SPI_begin(){
 
 }
 
-// End the SPI
+// Disable the SPI
 void SPI_end(int spi_fd){
     close(spi_fd);
 }
@@ -110,10 +106,8 @@ void reg_write(int spi_fd, uint16_t data){
     struct spi_ioc_transfer tr ={
         .tx_buf = (unsigned long) tx,
         .rx_buf = (unsigned long) NULL,
-        //.len = (sizeof(tx)/sizeof(*tx) * 2),
         .len = 2,
         .delay_usecs = spi_delay,
-        //.speed_hz = spi_speed,
         .bits_per_word = bits_per_word,
     };
 

@@ -28,6 +28,11 @@
 #include "HighPowerStepperDriver.hpp"
 #include "HSPD_SPI.hpp"
 
+// Send the error msg and terminate the program
+static void pabort(const char *s){
+    std::cout << s << std::endl; // output the error message to the terminal
+    std::exit(EXIT_FAILURE);  // terminate the program
+}
 
 // Address of control and status registers
 enum class HPSDRegAddr : uint8_t
@@ -83,20 +88,20 @@ enum class HPSDStatusBit : uint8_t
 
 // Low level functions for reading and writing from SPI with DRV8711
 class DRV8711SPI{
+private:
+    uint8_t cs_pin = 17;
 
 public:
     // Write the specified value to a register
     void writeReg(uint8_t address, uint16_t value){
         // read/write bit and register address are the first 4 bits of the first byte; data
         // is in the temaining 4 bits of the first byte combined with the second byte (12 bytes total)
-	setChipSelectPin();
-        gpioWrite(17, 1);
-        std::this_thread::sleep_for(std::chrono::microseconds(10));
+	    setChipSelectPin();
+        gpioWrite(cs_pin, 1);
         int spi_fd = SPI_begin();
         reg_write(spi_fd, (address & 0b111) << 12 | (value & 0xFFF));
         SPI_end(spi_fd);
-        std::this_thread::sleep_for(std::chrono::microseconds(5));
-        gpioWrite(17, 0);
+        gpioWrite(cs_pin, 0);
     }
 
     // Write the specified value to a register
@@ -106,9 +111,11 @@ public:
 
     void setChipSelectPin()
     {
-        gpioInitialise();
-        gpioSetMode(17, PI_OUTPUT);
-        gpioWrite(17, 0);
+        if(!gpioInitialise()){
+            pabort("Use 'sudo' to initialize the GPIO!\n");
+        };
+        gpioSetMode(cs_pin, PI_OUTPUT);
+        gpioWrite(cs_pin, 0);
     }
 };
 
@@ -218,7 +225,7 @@ public:
     /// The driver automatically clears the RSTEP bit after it is written.
     void step()
     {
-    driver.writeReg(HPSDRegAddr::CTRL, ctrl | (1 << 2));
+        driver.writeReg(HPSDRegAddr::CTRL, ctrl | (1 << 2));
     }
 
     /// Sets the driver's stepping mode (MODE).
@@ -365,8 +372,6 @@ public:
 
 protected:
 
-
-
     uint16_t ctrl, torque, off, blank, decay, stall, drive;
 
     /// Writes the cached value of the CTRL register to the device.
@@ -408,11 +413,18 @@ protected:
         driver.writeReg(HPSDRegAddr::DRIVE, drive);
     }
 
+    // Default settings initialize
+    void initStepper(HighPowerStepperDriver sd){
+    sd.resetSettings();                          // clear the settings register
+    sd.clearStatus();                            // clear the settings register
+    sd.setDecayMode(HPSDDecayMode::AutoMixed);   // set the decay mode
+    sd.setCurrentMilliamps36v4(2500);            // set the current limitation
+    sd.setStepMode(HPSDStepMode::MicroStep128);  // set the micro-stepping mode
+    sd.enableDriver();                           // enable the driver
+    }
+
     public:
         DRV8711SPI driver; 
 
 };
-
-
-
 #endif
